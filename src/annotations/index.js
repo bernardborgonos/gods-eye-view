@@ -1,5 +1,6 @@
 import { createAnnotationEngine } from './annotationEngine.js';
 import { createHybridAnnotationRenderer } from './hybridAnnotationRenderer.js';
+import { GeometryDragController } from '../ui/geometryDragController.js';
 
 /**
  * Initialize the map-annotation engine and expose it for the voice agent and
@@ -16,7 +17,22 @@ export function initAnnotations({ viewer, tileset = null }) {
     try { tileset.enableCollision = true; } catch { /* older tileset */ }
   }
   const renderer = createHybridAnnotationRenderer(viewer);
+  const dragController = new GeometryDragController(viewer, {
+    onUpdate: (coords, mode, item) => {
+      if (item) {
+        if (item.ring) item.ring = coords;
+        renderer.sync?.();
+      }
+    },
+    onCommit: (coords, mode, item) => {
+      if (item) {
+        if (item.ring) item.ring = coords;
+        renderer.sync?.();
+      }
+    },
+  });
   const engine = createAnnotationEngine({ viewer, renderer });
+  engine.dragController = dragController;
   window.__gevAnnotations = engine;
   return engine;
 }
