@@ -27,6 +27,7 @@ import {
 } from './data/layerState.js';
 import { renderMapStackChips, syncMapStackChips } from './mapStackChips.js';
 import { OrbitController } from './orbit.js';
+import { GeometryDragController } from './ui/geometryDragController.js';
 import {
   CelestialRing,
   getKeyholeFadeTuning,
@@ -2392,6 +2393,20 @@ export class StyleManager {
     // Orbit controller
     this.orbitController = new OrbitController(viewer);
     this._orbitIndicator = null;
+
+    // Geometry drag controller (centroid MOVE handle & vertex editing)
+    this.geometryDragController = new GeometryDragController(viewer, {
+      onUpdate: (coords, mode, item) => {
+        window.dispatchEvent(new CustomEvent('gev:geometry-drag-update', {
+          detail: { coords, mode, item },
+        }));
+      },
+      onCommit: (coords, mode, item) => {
+        window.dispatchEvent(new CustomEvent('gev:geometry-drag-commit', {
+          detail: { coords, mode, item },
+        }));
+      },
+    });
 
     // Intel HUD
     this.hud = new IntelHUD(viewer);
@@ -10300,6 +10315,10 @@ export class StyleManager {
     if (this._radioSelectedHandler) {
       document.removeEventListener('gev:radio-selected', this._radioSelectedHandler);
       this._radioSelectedHandler = null;
+    }
+    if (this.geometryDragController) {
+      this.geometryDragController.destroy();
+      this.geometryDragController = null;
     }
     destroyTrackedReadout();
     destroyDetection();
